@@ -29,6 +29,7 @@ from math import pi, cos, sin, log, radians
 from mathutils import Vector, Matrix, Euler
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 from bpy.app.handlers import persistent
+from shutil import copyfile
 
 from .constants import *
 
@@ -694,6 +695,36 @@ def detect_hdris(self, context):
         prefs = bpy.context.preferences.addons[__package__].preferences
         prefs.ForcePreviewsRefresh = True
         switch_hdri(self, context)
+
+
+def add_external_hdri(context, asset_id, file_paths, thumb_path):
+    global hdri_list
+
+    # add files to list
+    if asset_id not in hdri_list:
+        hdri_list[asset_id] = file_paths
+    else:
+        for file_path in file_paths:
+            if file_path not in hdri_list[asset_id]:
+                hdri_list[asset_id].append(file_path)
+
+    # Sort variations by filesize
+    hdri_list[asset_id] = sorted(hdri_list[asset_id], key=lambda x: os.path.getsize(x))
+
+    # write list
+    with open(hdri_list_path, 'w') as f:
+        f.write(json.dumps(hdri_list, indent=4))
+
+    # copy thumb
+    if thumb_path is not None:
+        thumb_target_path = os.path.join(thumbnail_dir, asset_id + "__thumb_preview.jpg")
+        if not os.path.exists(thumb_target_path):
+            copyfile(thumb_path, thumb_target_path)
+
+    # select asset and refresh previews
+    refresh_previews()
+    context.scene.gaf_props.hdri = asset_id
+    switch_hdri(None, context)
 
 
 def get_hdri_list(use_search=False):

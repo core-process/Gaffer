@@ -51,6 +51,9 @@ from mathutils import Vector, Matrix
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 from bpy.app.handlers import persistent
 
+from . import assetexchange
+import gaffer_assetexchange.assetexchange_blender as assetexchange_blender
+from .assetpush import AssetPushService
 
 class GafferPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
@@ -642,8 +645,11 @@ def register():
     bpy.types.Scene.gaf_props = bpy.props.PointerProperty(type=GafferProperties)
     bpy.app.handlers.load_post.append(operators.load_handler)
 
+    assetexchange_blender.register_addon("com.github.gregzaal.gaffer", bl_info, AssetPushService)
 
 def unregister():
+    assetexchange_blender.unregister_addon("com.github.gregzaal.gaffer")
+
     addon_updater_ops.unregister()
 
     bpy.app.handlers.load_post.remove(operators.load_handler)
